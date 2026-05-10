@@ -1,0 +1,25 @@
+[
+  {
+    "name": "Fallos de UI (Playwright timeout)",
+    "messageRegex": ".*TimeoutError.*",
+    "matchedStatuses": ["failed", "broken"]
+  },
+  {
+    "name": "Fallos de API (HTTP error)",
+    "messageRegex": ".*HTTPError.*|.*ConnectionError.*|.*4[0-9]{2}.*|.*5[0-9]{2}.*",
+    "matchedStatuses": ["failed", "broken"]
+  },
+  {
+    "name": "Errores de aserción (resultado inesperado)",
+    "messageRegex": ".*AssertionError.*",
+    "matchedStatuses": ["failed"]
+  },
+  {
+    "name": "Errores de configuración / setup",
+    "matchedStatuses": ["broken"]
+  },
+  {
+    "name": "Tests omitidos",
+    "matchedStatuses": ["skipped"]
+  }
+]

@@ -24,6 +24,7 @@ reports/
 *.json
 *.txt
 !requirements.txt
+!allure/categories.json
 
 # Sesión de autenticación de Playwright (contiene cookies/tokens)
 .auth_state.json
