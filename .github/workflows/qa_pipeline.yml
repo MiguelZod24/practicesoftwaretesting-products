@@ -1,0 +1,433 @@
+name: QA Automation Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write       # push to gh-pages
+  issues: write         # create / comment issues
+  pull-requests: write  # status comments on PRs
+  models: read          # GitHub Models inference
+
+env:
+  PYTHON_VERSION: "3.11"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 1 ▸ TESTS  (Playwright + pytest + Allure results)
+# ══════════════════════════════════════════════════════════════════════════════
+jobs:
+  test:
+    name: "🧪 Tests – Playwright + pytest"
+    runs-on: ubuntu-latest
+    outputs:
+      passed: ${{ steps.summary.outputs.passed }}
+      failed: ${{ steps.summary.outputs.failed }}
+      total:  ${{ steps.summary.outputs.total }}
+      status: ${{ steps.summary.outputs.status }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt pytest-html pytest-cov
+
+      - name: Install Playwright browsers
+        run: playwright install chromium --with-deps
+
+      - name: Prepare output directories
+        run: mkdir -p reports allure-results
+
+      - name: Inject Allure environment & categories
+        run: |
+          cp allure/categories.json allure-results/categories.json
+
+          cat > allure-results/environment.properties << 'EOF'
+          Browser=Chromium (Playwright)
+          Base.URL=https://practicesoftwaretesting.com
+          Python.Version=3.11
+          Environment=CI – GitHub Actions
+          Run.Number=${{ github.run_number }}
+          Branch=${{ github.ref_name }}
+          Commit=${{ github.sha }}
+          EOF
+
+      - name: Run test suite
+        continue-on-error: true
+        env:
+          BASE_URL:      https://practicesoftwaretesting.com
+          API_URL:       https://api.practicesoftwaretesting.com
+          USER_EMAIL:    ${{ secrets.USER_EMAIL }}
+          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+          HEADLESS:      "true"
+        run: |
+          python -m pytest tests/ \
+            --alluredir=allure-results \
+            --junitxml=reports/junit.xml \
+            --cov=. \
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=term-missing \
+            --tb=short \
+            -v --no-header \
+            2>&1 | tee reports/pytest_output.txt
+
+      - name: Parse test results
+        id: summary
+        run: |
+          python3 - << 'PYEOF'
+          import xml.etree.ElementTree as ET, os, sys
+          try:
+              root  = ET.parse("reports/junit.xml").getroot()
+              suite = root.find(".//testsuite") or root
+              total  = int(suite.get("tests",    0))
+              failed = int(suite.get("failures", 0)) + int(suite.get("errors", 0))
+              passed = total - failed
+              status = "PASSED" if failed == 0 else "FAILED"
+          except Exception as e:
+              print(f"XML parse error: {e}", file=sys.stderr)
+              total, passed, failed, status = 0, 0, 0, "ERROR"
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"passed={passed}\nfailed={failed}\ntotal={total}\nstatus={status}\n")
+          print(f"✅ {passed} passed | ❌ {failed} failed | 📊 {total} total | {status}")
+          PYEOF
+
+      - name: Upload allure-results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results
+          path: allure-results/
+          retention-days: 30
+
+      - name: Upload reports (coverage + JUnit + pytest log)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: reports/
+          retention-days: 30
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 2 ▸ SONARCLOUD  (Análisis de calidad de código)
+# ══════════════════════════════════════════════════════════════════════════════
+  sonarcloud:
+    name: "🔍 SonarCloud – Calidad de Código"
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # SonarCloud requiere historial completo
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 3 ▸ GITHUB MODELS  (Análisis IA del resultado de tests)
+# ══════════════════════════════════════════════════════════════════════════════
+  github-models:
+    name: "🤖 GitHub Models – Análisis IA"
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    outputs:
+      analysis: ${{ steps.ai.outputs.analysis }}
+
+    steps:
+      - name: Download test output
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
+
+      - name: Call GitHub Models API
+        id: ai
+        env:
+          GH_TOKEN:      ${{ secrets.GITHUB_TOKEN }}
+          TESTS_PASSED:  ${{ needs.test.outputs.passed }}
+          TESTS_FAILED:  ${{ needs.test.outputs.failed }}
+          TESTS_TOTAL:   ${{ needs.test.outputs.total }}
+          TESTS_STATUS:  ${{ needs.test.outputs.status }}
+        run: |
+          python3 - << 'PYEOF'
+          import os, json, urllib.request, urllib.error
+
+          try:
+              raw = open("reports/pytest_output.txt", encoding="utf-8").read()
+              test_output = raw[-3000:]          # last 3 000 chars (failures section)
+          except Exception:
+              test_output = "Test output not available."
+
+          passed = os.environ.get("TESTS_PASSED", "?")
+          failed = os.environ.get("TESTS_FAILED", "?")
+          total  = os.environ.get("TESTS_TOTAL",  "?")
+          status = os.environ.get("TESTS_STATUS", "?")
+
+          prompt = f"""Eres un QA Lead senior. Analiza los resultados de tests de automatización \
+          (Playwright + pytest contra practicesoftwaretesting.com, Toolshop v5).
+
+          Resumen: {passed} passed | {failed} failed | {total} total | Estado: {status}
+
+          Salida completa de pytest (últimas líneas):
+          {test_output}
+
+          Responde EN ESPAÑOL con estas secciones exactas:
+
+          ## Resumen Ejecutivo
+          2-3 oraciones para stakeholders no técnicos sobre el estado de calidad.
+
+          ## Diagnóstico Técnico
+          Máximo 5 puntos sobre fallos o áreas de riesgo técnico.
+
+          ## Acciones Recomendadas
+          2-3 acciones concretas y priorizadas para el equipo."""
+
+          payload = {
+              "model":       "gpt-4o-mini",
+              "messages":    [{"role": "user", "content": prompt}],
+              "max_tokens":  900,
+              "temperature": 0.3,
+          }
+
+          req = urllib.request.Request(
+              "https://models.inference.ai.azure.com/chat/completions",
+              data=json.dumps(payload).encode("utf-8"),
+              headers={
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                  "Content-Type": "application/json",
+              },
+          )
+
+          try:
+              with urllib.request.urlopen(req, timeout=45) as resp:
+                  result   = json.loads(resp.read())
+                  analysis = result["choices"][0]["message"]["content"].strip()
+          except urllib.error.HTTPError as e:
+              body     = e.read().decode("utf-8", errors="replace")[:500]
+              analysis = f"*GitHub Models no disponible ({e.code} {e.reason}): {body}*"
+          except Exception as exc:
+              analysis = f"*Error al obtener análisis IA: {exc}*"
+
+          analysis = analysis[:2500]   # hard cap for GITHUB_OUTPUT
+
+          gh_output = os.environ.get("GITHUB_OUTPUT", "")
+          if gh_output:
+              with open(gh_output, "a", encoding="utf-8") as fh:
+                  fh.write("analysis<<__ANALYSIS_EOF__\n")
+                  fh.write(analysis + "\n")
+                  fh.write("__ANALYSIS_EOF__\n")
+
+          print(analysis)
+          PYEOF
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 4 ▸ ALLURE REPORT  (Reporte profesional con historial)
+# ══════════════════════════════════════════════════════════════════════════════
+  allure-report:
+    name: "📊 Allure – Reporte Profesional"
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download allure-results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results/
+
+      - name: Restore Allure history from gh-pages
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy previous history into results
+        continue-on-error: true
+        run: |
+          mkdir -p allure-results/history
+          if [ -d "gh-pages/history" ]; then
+            cp -r gh-pages/history/* allure-results/history/ 2>/dev/null || true
+            echo "Allure history restored."
+          else
+            echo "No previous history found – first run."
+          fi
+
+      - name: Generate Allure report (with trend)
+        uses: simple-elf/allure-report-action@v1.9
+        with:
+          allure_results:  allure-results
+          allure_report:   allure-report
+          allure_history:  allure-history
+          keep_reports:    20
+          github_repo:     ${{ github.repository }}
+          gh_pages:        gh-pages
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir:    allure-history
+
+      - name: Upload Allure report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report/
+          retention-days: 30
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 5 ▸ GITHUB ISSUES  (Registro permanente de cada ejecución)
+# ══════════════════════════════════════════════════════════════════════════════
+  create-issue:
+    name: "📋 GitHub Issues – Registro de Ejecución"
+    runs-on: ubuntu-latest
+    needs: [test, sonarcloud, github-models, allure-report]
+    if: always()
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and publish issue entry
+        env:
+          GH_TOKEN:       ${{ secrets.GITHUB_TOKEN }}
+          PASSED:         ${{ needs.test.outputs.passed }}
+          FAILED:         ${{ needs.test.outputs.failed }}
+          TOTAL:          ${{ needs.test.outputs.total }}
+          STATUS:         ${{ needs.test.outputs.status }}
+          AI_ANALYSIS:    ${{ needs.github-models.outputs.analysis }}
+          SONAR_RESULT:   ${{ needs.sonarcloud.result }}
+          ALLURE_RESULT:  ${{ needs.allure-report.result }}
+          RUN_URL:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ALLURE_URL:     https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          RUN_NUMBER:     ${{ github.run_number }}
+          BRANCH:         ${{ github.ref_name }}
+          SHA:            ${{ github.sha }}
+          ACTOR:          ${{ github.actor }}
+          REPO:           ${{ github.repository }}
+          SERVER_URL:     ${{ github.server_url }}
+        run: |
+          python3 - << 'PYEOF'
+          import os, subprocess, datetime, tempfile
+
+          passed  = os.environ.get("PASSED",  "?")
+          failed  = os.environ.get("FAILED",  "?")
+          total   = os.environ.get("TOTAL",   "?")
+          status  = os.environ.get("STATUS",  "?")
+          ai      = os.environ.get("AI_ANALYSIS",   "*Análisis no disponible.*")
+          sonar   = os.environ.get("SONAR_RESULT",  "skipped").capitalize()
+          allure  = os.environ.get("ALLURE_RESULT", "skipped").capitalize()
+          run_url = os.environ.get("RUN_URL",    "#")
+          al_url  = os.environ.get("ALLURE_URL", "#")
+          run_no  = os.environ.get("RUN_NUMBER", "?")
+          branch  = os.environ.get("BRANCH",     "?")
+          sha7    = os.environ.get("SHA",         "?")[:7]
+          actor   = os.environ.get("ACTOR",       "?")
+          repo    = os.environ.get("REPO",        "?")
+          srv     = os.environ.get("SERVER_URL",  "https://github.com")
+
+          emoji   = "✅" if status == "PASSED" else "❌"
+          now     = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+
+          # Status icons for each dependent job
+          def icon(r):
+              return {"success": "✅", "failure": "❌", "skipped": "⏭️"}.get(r.lower(), "⚠️")
+
+          body = f"""{emoji} **Pipeline QA – Run \\#{run_no}** &nbsp;|&nbsp; {now}
+
+          | Campo | Valor |
+          |---|---|
+          | **Estado** | {emoji} {status} |
+          | **Tests** | ✅ {passed} passed &nbsp;·&nbsp; ❌ {failed} failed &nbsp;·&nbsp; 📊 {total} total |
+          | **Branch** | `{branch}` |
+          | **Commit** | [`{sha7}`]({srv}/{repo}/commit/{os.environ.get("SHA","")}) |
+          | **Autor** | @{actor} |
+          | **SonarCloud** | {icon(sonar)} {sonar} |
+          | **Allure** | {icon(allure)} {allure} |
+          | **Ejecución** | [Ver en GitHub Actions]({run_url}) |
+          | **Reporte Allure** | [Ver reporte completo]({al_url}) |
+
+          <details>
+          <summary>🤖 Análisis IA — GitHub Models (clic para expandir)</summary>
+
+          {ai}
+
+          </details>
+
+          ---
+          *Generado automáticamente por [GitHub Actions]({run_url})*
+          """
+
+          # Ensure labels exist (ignore errors if they already do)
+          for name, color, desc in [
+              ("qa-pipeline", "0075ca", "QA automation pipeline results"),
+              ("automation",  "e4e669", "Automated test runs"),
+          ]:
+              subprocess.run(
+                  ["gh", "label", "create", name,
+                   "--color", color, "--description", desc],
+                  capture_output=True
+              )
+
+          # Find open tracking issue
+          result = subprocess.run(
+              ["gh", "issue", "list",
+               "--label", "qa-pipeline",
+               "--state", "open",
+               "--limit", "1",
+               "--json", "number",
+               "--jq", ".[0].number // empty"],
+              capture_output=True, text=True
+          )
+          issue_number = result.stdout.strip()
+
+          # Write body to temp file to avoid shell-escaping issues
+          with tempfile.NamedTemporaryFile(mode="w", suffix=".md",
+                                          delete=False, encoding="utf-8") as tmp:
+              tmp.write(body)
+              tmp_path = tmp.name
+
+          if not issue_number:
+              subprocess.run([
+                  "gh", "issue", "create",
+                  "--title", "QA Pipeline – Historial de Ejecuciones Automatizadas",
+                  "--body-file", tmp_path,
+                  "--label", "qa-pipeline",
+                  "--label", "automation",
+              ], check=True)
+              print("Created new tracking issue.")
+          else:
+              subprocess.run([
+                  "gh", "issue", "comment", issue_number,
+                  "--body-file", tmp_path,
+              ], check=True)
+              print(f"Added comment to issue #{issue_number}.")
+          PYEOF

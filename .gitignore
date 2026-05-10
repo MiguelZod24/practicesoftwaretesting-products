@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.mypy_cache/
+.ruff_cache/
+
+# Entorno virtual
+.venv/
+venv/
+env/
+
+# Variables de entorno (contienen credenciales)
+.env
+
+# Pytest
+.pytest_cache/
+pytest-cache/
+
+# Reportes generados (no versionar, se regeneran)
+reports/
+*.html
+*.png
+*.json
+*.txt
+!requirements.txt
+
+# Sesión de autenticación de Playwright (contiene cookies/tokens)
+.auth_state.json
+
+# Allure
+allure-results/
+allure-report/
