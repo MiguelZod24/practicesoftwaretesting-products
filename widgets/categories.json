@@ -1,0 +1,1 @@
+{"total":2,"items":[{"uid":"044a069dc98ec3678b8f736ba018bcac","name":"Fallos de UI (Playwright timeout)","statistic":{"failed":0,"broken":21,"skipped":0,"passed":0,"unknown":0,"total":21}},{"uid":"00c896a2d7b82b3401f11b7b7dac69a4","name":"Errores de configuración / setup","statistic":{"failed":0,"broken":21,"skipped":0,"passed":0,"unknown":0,"total":21}}]}
