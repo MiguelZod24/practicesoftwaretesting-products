@@ -3,12 +3,12 @@ launch_status_broken 21
 launch_status_passed 0
 launch_status_skipped 0
 launch_status_unknown 0
-launch_time_duration 36876
+launch_time_duration 36725
 launch_time_min_duration 0
 launch_time_max_duration 0
 launch_time_sum_duration 0
-launch_time_start 1778436402589
-launch_time_stop 1778436439465
+launch_time_start 1778436691470
+launch_time_stop 1778436728195
 launch_problems_fallos_de_ui_(playwright_timeout) 21
 launch_problems_errores_de_configuración_/_setup 21
 launch_retries_retries 0

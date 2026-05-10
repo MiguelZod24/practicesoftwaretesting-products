@@ -1,127 +1,127 @@
 "DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
 "
-    Escenario: Agregar múltiples unidades al carrito
-    Esperado:  Al seleccionar cantidad 2 y agregar, el badge del header muestra 2 y el toast confirma la acción
-    Impacto:   Si falla, el usuario no puede comprar más de 1 unidad del mismo producto en un solo paso
-    Accion:    Verificar que el selector de cantidad + incrementa correctamente y el payload de POST /carts incluye la cantidad
-    ","0","test_tc07b_agregar_multiples_unidades","tests","Sun May 10 18:07:15 UTC 2026","broken","Sun May 10 18:07:15 UTC 2026","","test_carrito","",""
-"
-    Escenario: Desmarcar una de las dos categorías activas ajusta el filtro parcialmente
-    Esperado:  Al desmarcar 'Hand Tools' permaneciendo 'Other' activa, los resultados bajan al total de 'Other'
-    Impacto:   Si falla, el usuario no puede ajustar un filtro compuesto de forma granular
-    Accion:    Verificar que el evento de desmarcado recalcula la unión de categorías restantes
-    ","0","test_tc04b_desmarcar_una_de_multiples_categorias","tests","Sun May 10 18:07:19 UTC 2026","broken","Sun May 10 18:07:19 UTC 2026","","test_filtros","",""
-"
-    Escenario: Seleccionar múltiples categorías acumula los resultados
-    Esperado:  Los productos de ambas categorías se combinan y el total suma los de cada una individualmente
-    Impacto:   Si falla, seleccionar varias categorías puede mostrar menos productos de los esperados o ninguno
-    Accion:    Verificar que el backend usa OR (no AND) para combinar múltiples filtros de categoría
-    ","0","test_tc04a_multiples_categorias_acumulan_resultados","tests","Sun May 10 18:07:19 UTC 2026","broken","Sun May 10 18:07:19 UTC 2026","","test_filtros","",""
-"
-    Escenario: Carrito persiste al recargar la página
-    Esperado:  Después de recargar con F5, el badge del carrito mantiene el número correcto
-    Impacto:   Si falla, el carrito se resetea en cada recarga y el usuario pierde su selección de compra
-    Accion:    Verificar que el carrito se carga desde el backend al iniciar la sesión, no solo desde memoria local
-    ","0","test_tc08b_carrito_persiste_al_recargar","tests","Sun May 10 18:07:16 UTC 2026","broken","Sun May 10 18:07:16 UTC 2026","","test_carrito","",""
-"
-    Escenario: Búsqueda con campo vacío no ejecuta búsqueda
-    Esperado:  No ocurre ninguna acción visible; los productos originales permanecen sin cambios
-    Impacto:   Si falla, el usuario podría ver un estado inconsistente del catálogo al dejar el campo vacío
-    Accion:    Verificar que el botón 'Search' no dispara la llamada API cuando el campo está vacío
-    ","0","test_tc02b_busqueda_campo_vacio","tests","Sun May 10 18:07:14 UTC 2026","broken","Sun May 10 18:07:14 UTC 2026","","test_busqueda","",""
-"
-    Escenario: Carrito persiste al navegar entre páginas
-    Esperado:  Después de navegar a otra página, el badge del carrito mantiene el número correcto y GET /carts devuelve el producto
-    Impacto:   Si falla, el carrito se pierde al navegar y el usuario tiene que volver a agregar los productos
-    Accion:    Verificar que la sesión/token se mantiene entre navegaciones y el estado del carrito se persiste en backend
-    ","0","test_tc08a_carrito_persiste_al_navegar","tests","Sun May 10 18:07:15 UTC 2026","broken","Sun May 10 18:07:15 UTC 2026","","test_carrito","",""
-"
-    Escenario: Actualizar cantidad de producto en el carrito
-    Esperado:  Al cambiar la cantidad de 1 a 3, el total del carrito refleja la nueva cantidad correctamente
-    Impacto:   Si falla, el usuario no puede ajustar cantidades en el carrito y debe eliminar y volver a agregar
-    Accion:    Verificar que el input de cantidad dispara el recalculo del total al perder el foco (Tab/blur)
-    ","0","test_tc09a_actualizar_cantidad_en_carrito","tests","Sun May 10 18:07:16 UTC 2026","broken","Sun May 10 18:07:16 UTC 2026","","test_carrito","",""
-"
-    Escenario: Búsqueda exitosa por nombre exacto
-    Esperado:  Se muestran productos con 'Pliers' en el nombre, status API 200 y el total UI coincide con la API
-    Impacto:   Si falla, el usuario no puede encontrar productos por nombre exacto y el catálogo es inusable
-    Accion:    Verificar que el endpoint GET /products?search= responde correctamente y el frontend actualiza el grid
-    ","0","test_tc01a_busqueda_nombre_exacto","tests","Sun May 10 18:06:42 UTC 2026","broken","Sun May 10 18:06:42 UTC 2026","","test_busqueda","",""
-"
-    Escenario: Desmarcar categoría restaura todos los productos
-    Esperado:  Al desmarcar 'Other', el catálogo vuelve a mostrar todos los productos sin filtro activo
-    Impacto:   Si falla, el usuario queda atrapado en el filtro sin poder volver al catálogo completo
-    Accion:    Verificar que el evento de desmarcado envía la petición sin filtro de categoría
-    ","0","test_tc03b_desmarcar_categoria_restaura_todos","tests","Sun May 10 18:07:18 UTC 2026","broken","Sun May 10 18:07:18 UTC 2026","","test_filtros","",""
-"
-    Escenario: Categorías del producto coinciden entre UI y API
-    Esperado:  Los tags de categoría visibles en la UI coinciden con el campo 'categories' de GET /products/{id}
-    Impacto:   Si falla, el usuario ve etiquetas de categoría incorrectas que confunden la navegación del catálogo
-    Accion:    Verificar que el componente de detalle muestra todas las categorías devueltas por la API
-    ","0","test_tc05b_categorias_coinciden_entre_ui_y_api","tests","Sun May 10 18:07:17 UTC 2026","broken","Sun May 10 18:07:17 UTC 2026","","test_detalle","",""
+    Escenario: Detalle de producto coincide con datos de la API
+    Esperado:  El nombre y precio mostrados en UI coinciden con 'name' y 'price' de GET /products/{id}; status 200
+    Impacto:   Si falla, el cliente puede ver datos incorrectos del producto y tomar decisiones de compra erróneas
+    Accion:    Revisar el mapeo de la respuesta API al componente de detalle y verificar el endpoint de producto
+    ","0","test_tc05a_detalle_coincide_con_api","tests","Sun May 10 18:12:06 UTC 2026","broken","Sun May 10 18:12:06 UTC 2026","","test_detalle","",""
 "
     Escenario: Botón 'Añadir al carrito' deshabilitado para producto agotado
     Esperado:  Se muestra la etiqueta 'Out of stock' y el botón está deshabilitado
     Impacto:   Si falla, el usuario puede intentar comprar un producto sin stock y generará errores en el pedido
     Accion:    Verificar que la UI respeta el campo 'in_stock' de la API para deshabilitar el botón correctamente
-    ","0","test_tc06b_boton_deshabilitado_sin_stock","tests","Sun May 10 18:07:18 UTC 2026","broken","Sun May 10 18:07:18 UTC 2026","","test_detalle","",""
+    ","0","test_tc06b_boton_deshabilitado_sin_stock","tests","Sun May 10 18:12:06 UTC 2026","broken","Sun May 10 18:12:06 UTC 2026","","test_detalle","",""
 "
-    Escenario: Filtrar por una categoría aplica el filtro automáticamente
-    Esperado:  Al marcar 'Other' se muestran 15 productos en 2 páginas sin necesidad de botón; la API retorna solo esa categoría
-    Impacto:   Si falla, los usuarios no pueden acotar el catálogo por categoría y ven todos los productos siempre
-    Accion:    Revisar el event listener del checkbox y la llamada al endpoint con by_category_slug
-    ","0","test_tc03a_filtrar_por_categoria_other","tests","Sun May 10 18:07:18 UTC 2026","broken","Sun May 10 18:07:18 UTC 2026","","test_filtros","",""
+    Escenario: Categorías del producto coinciden entre UI y API
+    Esperado:  Los tags de categoría visibles en la UI coinciden con el campo 'categories' de GET /products/{id}
+    Impacto:   Si falla, el usuario ve etiquetas de categoría incorrectas que confunden la navegación del catálogo
+    Accion:    Verificar que el componente de detalle muestra todas las categorías devueltas por la API
+    ","0","test_tc05b_categorias_coinciden_entre_ui_y_api","tests","Sun May 10 18:12:06 UTC 2026","broken","Sun May 10 18:12:06 UTC 2026","","test_detalle","",""
 "
-    Escenario: Búsqueda case-insensitive
-    Esperado:  Buscar 'PLIERS' en mayúsculas retorna los mismos 4 resultados que 'Pliers'
-    Impacto:   Si falla, usuarios que escriben en mayúsculas no obtienen resultados correctos
-    Accion:    Verificar que el backend normaliza la búsqueda a minúsculas antes de filtrar
-    ","0","test_tc01c_busqueda_case_insensitive","tests","Sun May 10 18:07:14 UTC 2026","broken","Sun May 10 18:07:14 UTC 2026","","test_busqueda","",""
+    Escenario: Búsqueda exitosa por nombre exacto
+    Esperado:  Se muestran productos con 'Pliers' en el nombre, status API 200 y el total UI coincide con la API
+    Impacto:   Si falla, el usuario no puede encontrar productos por nombre exacto y el catálogo es inusable
+    Accion:    Verificar que el endpoint GET /products?search= responde correctamente y el frontend actualiza el grid
+    ","0","test_tc01a_busqueda_nombre_exacto","tests","Sun May 10 18:11:31 UTC 2026","broken","Sun May 10 18:11:31 UTC 2026","","test_busqueda","",""
 "
-    Escenario: Agregar 1 unidad al carrito exitosamente
-    Esperado:  Aparece toast de confirmación, el badge del header muestra 1 y POST /carts retorna 200/201
-    Impacto:   Si falla, el flujo de compra principal está roto y ningún usuario puede agregar productos
-    Accion:    Verificar el endpoint POST /carts y el componente de notificación toast en la UI
-    ","0","test_tc07a_agregar_1_unidad_al_carrito","tests","Sun May 10 18:07:15 UTC 2026","broken","Sun May 10 18:07:15 UTC 2026","","test_carrito","",""
-"
-    Escenario: Carrito muestra mensaje de vacío al eliminar el último producto
-    Esperado:  Al eliminar el único producto, aparece toast, se muestra mensaje de 'carrito vacío' y el badge vuelve a 0
-    Impacto:   Si falla, el usuario puede ver un carrito vacío sin feedback claro o con datos obsoletos
-    Accion:    Verificar que el componente de carrito muestra el estado vacío cuando 'data' es [] y el badge se resetea a 0
-    ","0","test_tc11a_carrito_vacio_al_eliminar_ultimo_producto","tests","Sun May 10 18:07:16 UTC 2026","broken","Sun May 10 18:07:16 UTC 2026","","test_carrito","",""
+    Escenario: Búsqueda con campo vacío no ejecuta búsqueda
+    Esperado:  No ocurre ninguna acción visible; los productos originales permanecen sin cambios
+    Impacto:   Si falla, el usuario podría ver un estado inconsistente del catálogo al dejar el campo vacío
+    Accion:    Verificar que el botón 'Search' no dispara la llamada API cuando el campo está vacío
+    ","0","test_tc02b_busqueda_campo_vacio","tests","Sun May 10 18:12:03 UTC 2026","broken","Sun May 10 18:12:03 UTC 2026","","test_busqueda","",""
 "
     Escenario: Búsqueda con solo espacios muestra 0 resultados
     Esperado:  Se muestra el mensaje de 'sin resultados' y el contador indica 0 para ' '
     Impacto:   Si falla, búsquedas con espacios podrían retornar todos los productos o causar error
     Accion:    Verificar que el backend trata la búsqueda de espacios como término vacío sin resultados
-    ","0","test_tc02c_busqueda_solo_espacios","tests","Sun May 10 18:07:15 UTC 2026","broken","Sun May 10 18:07:15 UTC 2026","","test_busqueda","",""
+    ","0","test_tc02c_busqueda_solo_espacios","tests","Sun May 10 18:12:03 UTC 2026","broken","Sun May 10 18:12:03 UTC 2026","","test_busqueda","",""
 "
-    Escenario: Búsqueda sin resultados – término inexistente
-    Esperado:  Se muestra mensaje de 'sin resultados' y el contador indica 0; la API retorna 'data' vacío
-    Impacto:   Si falla, el usuario ve un grid vacío sin feedback claro sobre la ausencia de resultados
-    Accion:    Verificar que el componente de resultados muestra el mensaje vacío cuando 'data' es []
-    ","0","test_tc02a_busqueda_termino_inexistente","tests","Sun May 10 18:07:14 UTC 2026","broken","Sun May 10 18:07:14 UTC 2026","","test_busqueda","",""
+    Escenario: Filtrar por una categoría aplica el filtro automáticamente
+    Esperado:  Al marcar 'Other' se muestran 15 productos en 2 páginas sin necesidad de botón; la API retorna solo esa categoría
+    Impacto:   Si falla, los usuarios no pueden acotar el catálogo por categoría y ven todos los productos siempre
+    Accion:    Revisar el event listener del checkbox y la llamada al endpoint con by_category_slug
+    ","0","test_tc03a_filtrar_por_categoria_other","tests","Sun May 10 18:12:07 UTC 2026","broken","Sun May 10 18:12:07 UTC 2026","","test_filtros","",""
 "
-    Escenario: Eliminar producto del carrito
-    Esperado:  Al hacer clic en el botón X, aparece toast 'PRODUCTO ELIMINADO', el producto desaparece y el badge se actualiza
-    Impacto:   Si falla, el usuario no puede quitar productos del carrito y está forzado a completar la compra
-    Accion:    Verificar que DELETE /carts/{id}/product/{id} funciona y la UI remueve la fila del producto
-    ","0","test_tc10a_eliminar_producto_del_carrito","tests","Sun May 10 18:07:16 UTC 2026","broken","Sun May 10 18:07:16 UTC 2026","","test_carrito","",""
+    Escenario: Seleccionar múltiples categorías acumula los resultados
+    Esperado:  Los productos de ambas categorías se combinan y el total suma los de cada una individualmente
+    Impacto:   Si falla, seleccionar varias categorías puede mostrar menos productos de los esperados o ninguno
+    Accion:    Verificar que el backend usa OR (no AND) para combinar múltiples filtros de categoría
+    ","0","test_tc04a_multiples_categorias_acumulan_resultados","tests","Sun May 10 18:12:07 UTC 2026","broken","Sun May 10 18:12:07 UTC 2026","","test_filtros","",""
 "
-    Escenario: Detalle de producto coincide con datos de la API
-    Esperado:  El nombre y precio mostrados en UI coinciden con 'name' y 'price' de GET /products/{id}; status 200
-    Impacto:   Si falla, el cliente puede ver datos incorrectos del producto y tomar decisiones de compra erróneas
-    Accion:    Revisar el mapeo de la respuesta API al componente de detalle y verificar el endpoint de producto
-    ","0","test_tc05a_detalle_coincide_con_api","tests","Sun May 10 18:07:17 UTC 2026","broken","Sun May 10 18:07:17 UTC 2026","","test_detalle","",""
+    Escenario: Carrito muestra mensaje de vacío al eliminar el último producto
+    Esperado:  Al eliminar el único producto, aparece toast, se muestra mensaje de 'carrito vacío' y el badge vuelve a 0
+    Impacto:   Si falla, el usuario puede ver un carrito vacío sin feedback claro o con datos obsoletos
+    Accion:    Verificar que el componente de carrito muestra el estado vacío cuando 'data' es [] y el badge se resetea a 0
+    ","0","test_tc11a_carrito_vacio_al_eliminar_ultimo_producto","tests","Sun May 10 18:12:05 UTC 2026","broken","Sun May 10 18:12:05 UTC 2026","","test_carrito","",""
+"
+    Escenario: Desmarcar categoría restaura todos los productos
+    Esperado:  Al desmarcar 'Other', el catálogo vuelve a mostrar todos los productos sin filtro activo
+    Impacto:   Si falla, el usuario queda atrapado en el filtro sin poder volver al catálogo completo
+    Accion:    Verificar que el evento de desmarcado envía la petición sin filtro de categoría
+    ","0","test_tc03b_desmarcar_categoria_restaura_todos","tests","Sun May 10 18:12:07 UTC 2026","broken","Sun May 10 18:12:07 UTC 2026","","test_filtros","",""
 "
     Escenario: Botón 'Añadir al carrito' habilitado para producto con stock
     Esperado:  El botón es visible y está habilitado; el selector de cantidad + está activo
     Impacto:   Si falla, el usuario no puede agregar al carrito un producto que sí tiene stock
     Accion:    Verificar que la propiedad 'is_location_allowed' / 'in_stock' de la API es true y el botón refleja ese estado
-    ","0","test_tc06a_boton_habilitado_con_stock","tests","Sun May 10 18:07:17 UTC 2026","broken","Sun May 10 18:07:17 UTC 2026","","test_detalle","",""
+    ","0","test_tc06a_boton_habilitado_con_stock","tests","Sun May 10 18:12:06 UTC 2026","broken","Sun May 10 18:12:06 UTC 2026","","test_detalle","",""
+"
+    Escenario: Actualizar cantidad de producto en el carrito
+    Esperado:  Al cambiar la cantidad de 1 a 3, el total del carrito refleja la nueva cantidad correctamente
+    Impacto:   Si falla, el usuario no puede ajustar cantidades en el carrito y debe eliminar y volver a agregar
+    Accion:    Verificar que el input de cantidad dispara el recalculo del total al perder el foco (Tab/blur)
+    ","0","test_tc09a_actualizar_cantidad_en_carrito","tests","Sun May 10 18:12:05 UTC 2026","broken","Sun May 10 18:12:05 UTC 2026","","test_carrito","",""
+"
+    Escenario: Agregar 1 unidad al carrito exitosamente
+    Esperado:  Aparece toast de confirmación, el badge del header muestra 1 y POST /carts retorna 200/201
+    Impacto:   Si falla, el flujo de compra principal está roto y ningún usuario puede agregar productos
+    Accion:    Verificar el endpoint POST /carts y el componente de notificación toast en la UI
+    ","0","test_tc07a_agregar_1_unidad_al_carrito","tests","Sun May 10 18:12:04 UTC 2026","broken","Sun May 10 18:12:04 UTC 2026","","test_carrito","",""
+"
+    Escenario: Búsqueda sin resultados – término inexistente
+    Esperado:  Se muestra mensaje de 'sin resultados' y el contador indica 0; la API retorna 'data' vacío
+    Impacto:   Si falla, el usuario ve un grid vacío sin feedback claro sobre la ausencia de resultados
+    Accion:    Verificar que el componente de resultados muestra el mensaje vacío cuando 'data' es []
+    ","0","test_tc02a_busqueda_termino_inexistente","tests","Sun May 10 18:12:03 UTC 2026","broken","Sun May 10 18:12:03 UTC 2026","","test_busqueda","",""
+"
+    Escenario: Desmarcar una de las dos categorías activas ajusta el filtro parcialmente
+    Esperado:  Al desmarcar 'Hand Tools' permaneciendo 'Other' activa, los resultados bajan al total de 'Other'
+    Impacto:   Si falla, el usuario no puede ajustar un filtro compuesto de forma granular
+    Accion:    Verificar que el evento de desmarcado recalcula la unión de categorías restantes
+    ","0","test_tc04b_desmarcar_una_de_multiples_categorias","tests","Sun May 10 18:12:08 UTC 2026","broken","Sun May 10 18:12:08 UTC 2026","","test_filtros","",""
+"
+    Escenario: Búsqueda case-insensitive
+    Esperado:  Buscar 'PLIERS' en mayúsculas retorna los mismos 4 resultados que 'Pliers'
+    Impacto:   Si falla, usuarios que escriben en mayúsculas no obtienen resultados correctos
+    Accion:    Verificar que el backend normaliza la búsqueda a minúsculas antes de filtrar
+    ","0","test_tc01c_busqueda_case_insensitive","tests","Sun May 10 18:12:03 UTC 2026","broken","Sun May 10 18:12:03 UTC 2026","","test_busqueda","",""
+"
+    Escenario: Carrito persiste al navegar entre páginas
+    Esperado:  Después de navegar a otra página, el badge del carrito mantiene el número correcto y GET /carts devuelve el producto
+    Impacto:   Si falla, el carrito se pierde al navegar y el usuario tiene que volver a agregar los productos
+    Accion:    Verificar que la sesión/token se mantiene entre navegaciones y el estado del carrito se persiste en backend
+    ","0","test_tc08a_carrito_persiste_al_navegar","tests","Sun May 10 18:12:04 UTC 2026","broken","Sun May 10 18:12:04 UTC 2026","","test_carrito","",""
 "
     Escenario: Búsqueda exitosa por término parcial
     Esperado:  Se muestran productos cuyos nombres contienen 'Pli' y la API retorna los mismos
     Impacto:   Si falla, los usuarios que buscan con términos incompletos no obtienen resultados
     Accion:    Revisar la lógica de búsqueda parcial en backend y el filtrado en frontend
-    ","0","test_tc01b_busqueda_termino_parcial","tests","Sun May 10 18:07:13 UTC 2026","broken","Sun May 10 18:07:13 UTC 2026","","test_busqueda","",""
+    ","0","test_tc01b_busqueda_termino_parcial","tests","Sun May 10 18:12:02 UTC 2026","broken","Sun May 10 18:12:02 UTC 2026","","test_busqueda","",""
+"
+    Escenario: Eliminar producto del carrito
+    Esperado:  Al hacer clic en el botón X, aparece toast 'PRODUCTO ELIMINADO', el producto desaparece y el badge se actualiza
+    Impacto:   Si falla, el usuario no puede quitar productos del carrito y está forzado a completar la compra
+    Accion:    Verificar que DELETE /carts/{id}/product/{id} funciona y la UI remueve la fila del producto
+    ","0","test_tc10a_eliminar_producto_del_carrito","tests","Sun May 10 18:12:05 UTC 2026","broken","Sun May 10 18:12:05 UTC 2026","","test_carrito","",""
+"
+    Escenario: Carrito persiste al recargar la página
+    Esperado:  Después de recargar con F5, el badge del carrito mantiene el número correcto
+    Impacto:   Si falla, el carrito se resetea en cada recarga y el usuario pierde su selección de compra
+    Accion:    Verificar que el carrito se carga desde el backend al iniciar la sesión, no solo desde memoria local
+    ","0","test_tc08b_carrito_persiste_al_recargar","tests","Sun May 10 18:12:04 UTC 2026","broken","Sun May 10 18:12:04 UTC 2026","","test_carrito","",""
+"
+    Escenario: Agregar múltiples unidades al carrito
+    Esperado:  Al seleccionar cantidad 2 y agregar, el badge del header muestra 2 y el toast confirma la acción
+    Impacto:   Si falla, el usuario no puede comprar más de 1 unidad del mismo producto en un solo paso
+    Accion:    Verificar que el selector de cantidad + incrementa correctamente y el payload de POST /carts incluye la cantidad
+    ","0","test_tc07b_agregar_multiples_unidades","tests","Sun May 10 18:12:04 UTC 2026","broken","Sun May 10 18:12:04 UTC 2026","","test_carrito","",""
